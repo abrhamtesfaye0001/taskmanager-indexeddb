@@ -4,7 +4,10 @@ const form = document.querySelector('#task-form'); //The form at the top
 const filter = document.querySelector('#filter'); //the task filter text field
 const taskList = document.querySelector('.collection'); //The UL
 const clearBtn = document.querySelector('.clear-tasks'); //the all task clear button
-const sortBtn = document.querySelector("#sortBtn");
+const sortDateAscBtn = document.querySelector("#sortDateAscBtn");
+const sortDateDescBtn = document.querySelector("#sortDateDescBtn")
+const sortNameAscBtn = document.querySelector("#sortNameAscBtn")
+const sortNameDescBtn = document.querySelector("#sortNameDescBtn")
 const reloadIcon = document.querySelector('.fa'); //the reload button at the top navigation 
 
 //DB variable 
@@ -117,19 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const link = document.createElement('a');
                 // Add class and the x marker for a 
                 link.className = 'delete-item secondary-content';
-                link.innerHTML = `
+                link.innerHTML = `${cursor.value.date.toString().slice(8,24).replace(" ","/")}
                  <i class="fa fa-remove"></i>
                 &nbsp;
                 <a href="./edit.html?id=${cursor.value.id}"><i class="fa fa-edit"></i> </a>
                 `;
-                // Append link to li
-                span = document.createElement("span");
-
-                span.innerHTML = `${cursor.value.date.toString().slice(8,24).replace(" ","/")}`
-                span.style="padding-left:30%;"
-                // li.append(`${cursor.value.date.toString().slice(8,24)}`);
-                li.appendChild(span)
-                
+                // Append link to li            
                 
                 li.appendChild(link);
                 // Append to UL 
@@ -138,7 +134,134 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+    function compareDateAsc(a,b){
+        if(a.date<b.date){
+            return -1;
+        }
+        if(a.date>b.date){
+            return 1;
+        }
+        return 0;
+    }
+    function compareDateDesc(a,b){
+        if(a.date<b.date){
+            return 1;
+        }
+        if(a.date>b.date){
+            return -1;
+        }
+        return 0;
+    }
+    function compareNameDesc(a,b){
+        if(a.taskname<b.taskname){
+            return 1;
+        }
+        if(a.taskname>b.taskname){
+            return -1;
+        }
+        return 0;
+    }
+    function compareNameAsc(a,b){
+        if(a.taskname<b.taskname){
+            return -1;
+        }
+        if(a.taskname>b.taskname){
+            return 1;
+        }
+        return 0;
+    }
+    
 
+    sortDateAscBtn.addEventListener("click",()=>{
+        sort(0);
+    })
+    sortDateDescBtn.addEventListener("click",()=>{
+        sort(1);
+    })
+    sortNameAscBtn.addEventListener("click",()=>{
+        sort(2);
+    })
+    sortNameDescBtn.addEventListener("click",()=>{
+        sort(3);
+    })
+    function sort(direction){
+        let transaction = DB.transaction(['tasks'], "readonly");
+        let objectStore = transaction.objectStore('tasks');
+        let tasksArray = []
+        objectStore.openCursor().onsuccess = function(event) {
+            var cursor = event.target.result;
+            
+            if(cursor) {
+              tasksArray.push(cursor.value)
+            //   console.log(cursor.value)
+
+            cursor.continue();
+            } else {
+            console.log('Entries all inserted.');
+            }
+        };
+        setTimeout(()=>{
+            switch (direction) {
+                case 0:
+                    tasksArray.sort(compareDateAsc);
+                    break;
+                case 1:
+                    tasksArray.sort(compareDateDesc);
+                    break;
+                case 2:
+                    tasksArray.sort(compareNameAsc);
+                break;
+                case 3:
+                    tasksArray.sort(compareNameDesc);
+                break;
+            
+                default:
+                    break;
+            }
+            console.log(tasksArray)
+            taskList.innerHTML = ""
+           tasksArray.forEach(
+               (task)=>{
+                   console.log("task")
+                // loop through every task object in the tasksArray and append the li in ul
+                // Create an li element when the user adds a task 
+                
+                const li = document.createElement('li');
+                //add Attribute for delete 
+                li.setAttribute('data-task-id', task.id);
+                // Adding a class
+                li.className = 'collection-item';
+                // Create text node and append it 
+                li.appendChild(document.createTextNode(task.taskname));
+               
+                
+                const link = document.createElement('a');
+                // Add class and the x marker for a 
+                link.className = 'delete-item secondary-content';
+                link.innerHTML = `
+                 <i class="fa fa-remove"></i>
+                &nbsp;
+                <a href="./edit.html?id=${task.id}"><i class="fa fa-edit"></i> </a>
+                `;
+                // Append link to li
+                span = document.createElement("span");
+    
+                span.innerHTML = `${task.date.toString().slice(8,24).replace(" ","/")}`
+                span.style="padding-left:30%;"
+                // li.append(`${task.date.toString().slice(8,24)}`);
+                li.appendChild(span)
+                
+                
+                li.appendChild(link);
+                // Append to UL 
+                taskList.appendChild(li);
+               }
+           )
+        },100)
+       
+
+
+    }
 
 
     // Remove task event [event delegation]
