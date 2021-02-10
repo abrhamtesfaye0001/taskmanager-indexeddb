@@ -239,17 +239,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add class and the x marker for a 
                 link.className = 'delete-item secondary-content';
                 link.innerHTML = `
+                ${task.date.toString().slice(8,24).replace(" ","/")}
                  <i class="fa fa-remove"></i>
                 &nbsp;
                 <a href="./edit.html?id=${task.id}"><i class="fa fa-edit"></i> </a>
                 `;
-                // Append link to li
-                span = document.createElement("span");
-    
-                span.innerHTML = `${task.date.toString().slice(8,24).replace(" ","/")}`
-                span.style="padding-left:30%;"
-                // li.append(`${task.date.toString().slice(8,24)}`);
-                li.appendChild(span)
+                
                 
                 
                 li.appendChild(link);
@@ -262,7 +257,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     }
+    function search(){
+        let transaction = DB.transaction(['tasks'], "readonly");
+        let objectStore = transaction.objectStore('tasks');
+        let tasksArray = []
+        objectStore.openCursor().onsuccess = function(event) {
+            var cursor = event.target.result;
+            
+            if(cursor) {
+              tasksArray.push(cursor.value)
+            //   console.log(cursor.value)
 
+            cursor.continue();
+            } else {
+            // console.log('Entries all inserted.');
+            }
+        };
+
+        setTimeout(()=>{
+            
+            
+            newTaskArray = []
+            for(let task of tasksArray){
+                
+                if(task["taskname"].includes(filter.value)){
+                    
+                    newTaskArray.push(task)
+                }
+            }
+            
+            
+            taskList.innerHTML = ""
+            newTaskArray.forEach(
+                (task)=>{
+                
+                 // loop through every task object in the tasksArray and append the li in ul
+                 // Create an li element when the user adds a task 
+                 
+                 const li = document.createElement('li');
+                 //add Attribute for delete 
+                 li.setAttribute('data-task-id', task.id);
+                 // Adding a class
+                 li.className = 'collection-item';
+                 // Create text node and append it 
+                 li.appendChild(document.createTextNode(task.taskname));
+                
+                 
+                 const link = document.createElement('a');
+                 // Add class and the x marker for a 
+                 link.className = 'delete-item secondary-content';
+                 link.innerHTML = `
+                 ${task.date.toString().slice(8,24).replace(" ","/")}
+                  <i class="fa fa-remove"></i>
+                 &nbsp;
+                 <a href="./edit.html?id=${task.id}"><i class="fa fa-edit"></i> </a>
+                 `;
+                 
+                 
+                 
+                 li.appendChild(link);
+                 // Append to UL 
+                 taskList.appendChild(li);
+                }
+            )
+        }
+        ,100)
+    }    
+    filter.addEventListener("keyup",search)
 
     // Remove task event [event delegation]
     taskList.addEventListener('click', removeTask);
